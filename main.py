@@ -1,20 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
-from functions import get_numbers
 import time
-
-# 1. Create connection with HTML code
-# 2. Obtain all the available items and its price
-#       - Create a function that generates a list with the buyable items and reverse it (more expensive > cheaper)
-#       - Create dictionary from list with name of  items as keys, and prices as values
-# 3. Create a loop to control the click on the screen with a while loop
-# 4. Create two counters for time (time_check that check every 5 seconds; and stop_time for 5min)
-# 5. Check if 5 seconds have passed (if time.time() > time_check), and if yes, then follow the purchaseable process
-#
-
-
 
 chrome_driver_path = "/Users/elenaalvarezortega/Desktop/Udemy/chromedriver"
 options = webdriver.ChromeOptions()
@@ -30,26 +17,39 @@ cookie = driver.find_element(By.ID, "cookie")
 items_list = []
 prices = []
 
+# Get a list with all the items that are able to purchase
 for item in items:
     items_list.append(item.text)
 new_list = items_list[0].split("\n")
 upgrade_list = [new_list[index] for index in range(len(new_list)) if index % 2 == 0]
+element_list = []
+
+# Reverse the list so the most expensive items will be the first ones in the list and from there create a dictionary
+# with the item name and its price
 for element in upgrade_list[::-1]:
-    print(element.replace(",", "").split("-"))
-    shopping_items = dict()
-
-for item in upgrade_list[::-1]:
-    prices.append(int(get_numbers(item)))
-
-# while game_is_on:
-#     cookie.click()
-#     money = int(driver.find_element(By.ID, "money").text)
+    element_list.append(element.replace(",", "").split("-"))
+shopping_items = dict((x, y) for x, y in element_list)
+print(shopping_items)
 
 time_check = time.time() + 5
-print(time_check)
-print(time.time())
 stop_time = time.time() + (60*5)
 
+while game_is_on:
+    cookie.click()
+    money = int(driver.find_element(By.ID, "money").text)
 
+    # Check every 5 second what items are available to purchase, getting the most expensive one over the other ones
+    if time.time() > time_check:
+        for key, value in shopping_items.items():
+            if money >= int(value):
+                print(money)
+                affordable_item = str(key).replace(" ", "")
+                print(affordable_item)
+                new_buy = driver.find_element(By.ID, f"buy{affordable_item}")
+                new_buy.click()
 
-driver.quit()
+    # After 5 minutes of automatically running the game, return the 'cookies/second' data
+    if time.time() > stop_time:
+        cookies_per_sec = driver.find_element(By.ID, "cps").text
+        print(cookies_per_sec)
+        driver.quit()
